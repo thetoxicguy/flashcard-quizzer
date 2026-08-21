@@ -9,12 +9,10 @@ from colorama import Fore, Style
 
 from exceptions import FlashcardError, InvalidModeError
 from models import Flashcard, SessionStats
-from quiz_engine import display_stats, get_quiz_mode, run_session
+from quiz_engine import SUPPORTED_MODES, display_stats, get_quiz_mode, run_session
 from utils.file_handler import load_flashcards
 
 colorama.init(autoreset=True)
-
-VALID_MODES = ["sequential", "random", "adaptive"]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,9 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
         "-m",
         "--mode",
         default="sequential",
-        choices=VALID_MODES,
+        choices=SUPPORTED_MODES,
         metavar="MODE",
-        help=f"Quiz mode: {', '.join(VALID_MODES)}. (default: sequential)",
+        help=f"Quiz mode: {', '.join(SUPPORTED_MODES)}. (default: sequential)",
     )
     parser.add_argument(
         "--stats",

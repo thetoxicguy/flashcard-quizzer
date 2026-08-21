@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, List
 
 from exceptions import FileLoadError, ValidationError
 from models import Flashcard
@@ -38,7 +38,7 @@ def _validate_card(raw: Any, index: int) -> Flashcard:
     return Flashcard(front=raw["front"].strip(), back=raw["back"].strip())
 
 
-def _extract_card_list(data: Union[List[Any], Dict[str, Any]]) -> List[Any]:
+def _extract_card_list(data: Any) -> List[Any]:
     """Extract the raw list of card dicts from either supported JSON format.
 
     Args:

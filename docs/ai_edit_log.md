@@ -105,3 +105,51 @@ Records of prompts, corrections, improvements, and defects fixed during AI-assis
 **Date:** 2026-08-21
 **Prompt summary:** Inspect uncovered lines and add meaningful tests.
 **Defect fixed:** Lines 85–87 of `main.py` (the `except InvalidModeError` branch in `run_quiz`) were unreachable via the CLI because `argparse` validates `choices` before `run_quiz` is called. Added `test_run_quiz_exits_on_invalid_mode` which calls `run_quiz` directly with a bypassed `argparse.Namespace` containing `mode="badmode"`, triggering the branch and asserting exit code 1 and stderr error message.
+
+---
+
+## Entry 14 — Dead Field Removed from AdaptiveMode (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply all Prompt 08 engineering review findings as refactors.
+**Defect fixed:** `AdaptiveMode.__init__` initialised `self._current: Optional[Flashcard] = None` and `next_card()` assigned to it before returning, but neither `mark_answer` nor `has_remaining` ever read it. The field was dead state — it added memory overhead and confusion about ownership without providing any value. Removed the field and the assignment entirely. All 89 tests continue to pass.
+
+---
+
+## Entry 15 — SessionStats Shared-Reference Across yield Boundary (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply engineering review finding: generator yields mutable reference.
+**Defect fixed:** `run_session()` was yielding the same `stats` object on every iteration. Any caller that stored multiple yielded values (e.g. in a list comprehension) would observe all stored references reflecting the final state, not the state at the time of yield. Fixed by yielding `dataclasses.replace(stats)` — a shallow copy frozen at the point of yield. Callers that only consume one value at a time are unaffected; callers that accumulate results now get correct snapshots.
+
+---
+
+## Entry 16 — VALID_MODES / _MODE_MAP Duplication Eliminated (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply engineering review finding: two separate mode lists that must be kept in sync manually.
+**Logic corrected:** `main.py` maintained a local `VALID_MODES = ["sequential", "random", "adaptive"]` list alongside `_MODE_MAP` in `quiz_engine.py`. Adding a new mode required editing two files. Resolved by deriving `SUPPORTED_MODES: List[str] = list(_MODE_MAP.keys())` in `quiz_engine.py` and importing it into `main.py` as the single source of truth for argparse `choices` and help text. `VALID_MODES` was deleted.
+
+---
+
+## Entry 17 — AnswerResult True Immutability via frozen dataclass (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply engineering review finding: AnswerResult claimed immutability but did not enforce it.
+**Defect fixed:** The original `AnswerResult` used `__slots__` which prevents adding new attributes at runtime but does not prevent reassigning existing ones (e.g. `result.correct = True` would succeed silently). Converted to `@dataclasses.dataclass(frozen=True)`, which generates `__setattr__` and `__delattr__` that raise `FrozenInstanceError` on any mutation attempt. The docstring claim of immutability is now enforced by the runtime.
+
+---
+
+## Entry 18 — _extract_card_list Annotation Widened to Any (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply engineering review finding: parameter annotation narrower than json.loads() return type.
+**Defect fixed:** `_extract_card_list` was annotated as accepting `Union[List[Any], Dict[str, Any]]`, but `json.loads()` returns `Any`. mypy silently accepted the narrow annotation only because `ignore_missing_imports` suppressed the mismatch context. Widened the annotation to `Any` (matching `json.loads`'s actual return type) and removed the now-unused `Union` and `Dict` imports from `utils/file_handler.py`.
+
+---
+
+## Entry 19 — README Updated with setup.cfg and Accurate Coverage (Prompt 09)
+
+**Date:** 2026-08-21
+**Prompt summary:** Apply engineering review finding: README omitted setup.cfg from architecture listing and showed stale coverage information.
+**Documentation corrected:** Added `setup.cfg` to the Architecture section of `README.md` with a description of its role (pytest and coverage configuration). Updated the coverage note from the original placeholder to the measured value: **99%** (237 statements, 2 missed — `__main__` guard and one display branch).

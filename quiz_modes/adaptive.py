@@ -17,14 +17,12 @@ class AdaptiveMode(QuizMode):
             cards: Flashcards to quiz adaptively.
         """
         self._queue: Deque[Flashcard] = deque(cards)
-        self._current: Optional[Flashcard] = None
 
     def next_card(self) -> Optional[Flashcard]:
         """Return the next card from the queue, or None if the queue is empty."""
         if not self._queue:
             return None
-        self._current = self._queue.popleft()
-        return self._current
+        return self._queue.popleft()
 
     def mark_answer(self, card: Flashcard, correct: bool) -> None:
         """Re-queue the card if the answer was incorrect.

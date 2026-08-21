@@ -1,5 +1,6 @@
 """Quiz engine: factory, session orchestration, and statistics display."""
 
+import dataclasses
 from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 from exceptions import InvalidModeError
@@ -18,6 +19,8 @@ _MODE_MAP: Dict[str, _ModeFactory] = {
     "random": RandomMode,
     "adaptive": AdaptiveMode,
 }
+
+SUPPORTED_MODES: List[str] = list(_MODE_MAP.keys())
 
 
 def get_quiz_mode(mode: str, cards: List[Flashcard]) -> QuizMode:
@@ -42,22 +45,13 @@ def get_quiz_mode(mode: str, cards: List[Flashcard]) -> QuizMode:
     return _MODE_MAP[key](cards)
 
 
+@dataclasses.dataclass(frozen=True)
 class AnswerResult:
     """Immutable result of a single answered card."""
 
-    __slots__ = ("card", "given", "correct")
-
-    def __init__(self, card: Flashcard, given: str, correct: bool) -> None:
-        """Initialise an AnswerResult.
-
-        Args:
-            card: The flashcard that was presented.
-            given: The raw answer supplied by the user.
-            correct: Whether the answer matched the expected back text.
-        """
-        self.card = card
-        self.given = given
-        self.correct = correct
+    card: Flashcard
+    given: str
+    correct: bool
 
 
 def _answers_match(given: str, expected: str) -> bool:
@@ -116,7 +110,9 @@ def run_session(
                 stats.missed.append(card.front)
 
         mode.mark_answer(card, correct=correct)
-        yield AnswerResult(card=card, given=raw, correct=correct), stats
+        yield AnswerResult(card=card, given=raw, correct=correct), dataclasses.replace(
+            stats
+        )
 
 
 def display_stats(stats: SessionStats) -> None:

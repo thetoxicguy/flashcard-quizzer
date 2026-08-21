@@ -49,7 +49,7 @@ Type `exit` at any answer prompt to quit. Press `Ctrl+C` to quit at any time.
 
 ```
 main.py              — CLI entry point (argparse)
-quiz_engine.py       — Factory (get_quiz_mode) + session orchestration + stats display
+quiz_engine.py       — Factory (get_quiz_mode) + SUPPORTED_MODES + session engine + stats
 models.py            — Flashcard and SessionStats dataclasses
 exceptions.py        — Custom application exceptions
 utils/
@@ -60,8 +60,9 @@ quiz_modes/
   random.py          — RandomMode
   adaptive.py        — AdaptiveMode
 data/                — Sample JSON flashcard files
-tests/               — Pytest test suite
+tests/               — Pytest test suite (89 tests, 99% coverage)
 docs/                — AI edit log and documentation
+setup.cfg            — pytest and coverage configuration
 ```
 
 ### Design Patterns
@@ -75,6 +76,8 @@ docs/                — AI edit log and documentation
 python -m pytest tests/ -v
 python -m pytest --cov=. --cov-report=html
 ```
+
+Current coverage: **99%** (237 statements, 2 missed — `__main__` guard and one display branch).
 
 ## Quality Gates
 
