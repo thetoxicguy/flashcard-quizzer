@@ -81,3 +81,27 @@ Records of prompts, corrections, improvements, and defects fixed during AI-assis
 **Date:** 2026-08-21
 **Prompt summary:** Write `tests/test_quiz_engine.py` with full type annotations.
 **Defect fixed:** `input_fn_from` was typed as accepting `List[Optional[str]]`, but call sites passed `List[str]` (no `None`). mypy correctly rejected this because `list` is invariant. Fixed by changing the parameter type to `Sequence[Optional[str]]`, which is covariant and accepts both `List[str]` and `List[Optional[str]]` at call sites.
+
+---
+
+## Entry 11 — CLI Summary Always Displayed (Prompt 06)
+
+**Date:** 2026-08-21
+**Prompt summary:** Build the user-facing CLI and verify interaction requirements.
+**Usability improvement:** The original `run_quiz` only printed session statistics when `--stats` was passed, leaving users with no feedback after a session that ended early or via `exit`. Added a compact one-line summary (`Session complete — X/Y correct (Z% accuracy). Missed terms: ...`) that always prints at session end. The detailed `display_stats()` block is still gated behind `--stats` for users who want the full breakdown. This satisfies the spec requirement "Display a final summary containing total questions, accuracy percentage, and missed terms."
+
+---
+
+## Entry 12 — Coverage: main.py Was 0% Without Direct Unit Tests (Prompt 07)
+
+**Date:** 2026-08-21
+**Prompt summary:** Achieve ≥90% test coverage across the project.
+**Defect fixed:** First coverage run showed `main.py` at 0% because subprocess tests spawn a child process whose coverage is not captured by the parent pytest session. Created `tests/test_main.py` with direct unit tests for `build_parser`, `_make_input_fn`, `run_quiz`, and `main()` using `monkeypatch` and `MagicMock`. Coverage for `main.py` rose from 0% to 98%. Total project coverage: **99%**.
+
+---
+
+## Entry 13 — Coverage Gap: InvalidModeError Branch in run_quiz (Prompt 07)
+
+**Date:** 2026-08-21
+**Prompt summary:** Inspect uncovered lines and add meaningful tests.
+**Defect fixed:** Lines 85–87 of `main.py` (the `except InvalidModeError` branch in `run_quiz`) were unreachable via the CLI because `argparse` validates `choices` before `run_quiz` is called. Added `test_run_quiz_exits_on_invalid_mode` which calls `run_quiz` directly with a bypassed `argparse.Namespace` containing `mode="badmode"`, triggering the branch and asserting exit code 1 and stderr error message.

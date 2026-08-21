@@ -160,3 +160,29 @@ def test_whitespace_stripped_from_fields(tmp_path: Path) -> None:
     cards = load_flashcards(path)
     assert cards[0].front == "Term"
     assert cards[0].back == "Def"
+
+
+def test_reject_cards_value_not_a_list(tmp_path: Path) -> None:
+    """An object where 'cards' is not a list raises ValidationError."""
+    data = {"cards": "not a list"}
+    path = write_json(tmp_path, data)
+    with pytest.raises(ValidationError, match="must be a list"):
+        load_flashcards(path)
+
+
+def test_load_path_is_directory_raises_file_load_error(tmp_path: Path) -> None:
+    """Passing a directory path raises FileLoadError."""
+    with pytest.raises(FileLoadError, match="not a file"):
+        load_flashcards(str(tmp_path))
+
+
+def test_load_oserror_on_read(tmp_path: Path) -> None:
+    """An OSError during file read raises FileLoadError."""
+    from unittest.mock import patch
+
+    card_file = tmp_path / "cards.json"
+    card_file.write_text('[{"front": "Q", "back": "A"}]', encoding="utf-8")
+
+    with patch("utils.file_handler.Path.read_text", side_effect=OSError("disk error")):
+        with pytest.raises(FileLoadError, match="Cannot read file"):
+            load_flashcards(str(card_file))

@@ -99,6 +99,14 @@ def run_quiz(args: argparse.Namespace) -> None:
             print(Fore.RED + f"Incorrect. The answer is: {result.card.back}")
         print()
 
+    print(
+        f"Session complete — {stats.correct}/{stats.total} correct "
+        f"({stats.accuracy:.1f}% accuracy)."
+    )
+    if stats.missed:
+        missed_list = ", ".join(stats.missed)
+        print(f"Missed terms: {missed_list}")
+
     if args.stats:
         display_stats(stats)
 
