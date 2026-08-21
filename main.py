@@ -2,13 +2,14 @@
 
 import argparse
 import sys
+from typing import Callable, Optional
 
 import colorama
 from colorama import Fore, Style
 
 from exceptions import FlashcardError, InvalidModeError
-from models import SessionStats
-from quiz_engine import display_stats, get_quiz_mode
+from models import Flashcard, SessionStats
+from quiz_engine import display_stats, get_quiz_mode, run_session
 from utils.file_handler import load_flashcards
 
 colorama.init(autoreset=True)
@@ -45,6 +46,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _make_input_fn(
+    prompt_prefix: str,
+) -> Callable[[Flashcard], Optional[str]]:
+    """Return a terminal input function that prints the card front and reads a line.
+
+    Args:
+        prompt_prefix: Label printed before the answer prompt (e.g. "A: ").
+
+    Returns:
+        A callable suitable for passing to ``run_session``.
+    """
+
+    def _input(card: Flashcard) -> Optional[str]:
+        print(f"Q: {card.front}")
+        try:
+            return input(prompt_prefix)
+        except EOFError:
+            return None
+
+    return _input
+
+
 def run_quiz(args: argparse.Namespace) -> None:
     """Load cards, run the quiz loop, and optionally display stats.
 
@@ -63,36 +86,17 @@ def run_quiz(args: argparse.Namespace) -> None:
         print(f"{Fore.RED}Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    stats = SessionStats()
     print(
         f"Starting {args.mode} quiz with {len(cards)} card(s). "
         "Type 'exit' to quit.\n"
     )
 
-    while mode.has_remaining():
-        card = mode.next_card()
-        if card is None:
-            break
-
-        print(f"Q: {card.front}")
-        try:
-            answer = input("A: ").strip()
-        except EOFError:
-            break
-
-        if answer.lower() == "exit":
-            print("Exiting quiz.")
-            break
-
-        stats.total += 1
-        if answer.lower() == card.back.lower():
+    stats = SessionStats()
+    for result, stats in run_session(mode, _make_input_fn("A: ")):
+        if result.correct:
             print(Fore.GREEN + "Correct!")
-            stats.correct += 1
-            mode.mark_answer(card, correct=True)
         else:
-            print(Fore.RED + f"Incorrect. The answer is: {card.back}")
-            stats.missed.append(card.front)
-            mode.mark_answer(card, correct=False)
+            print(Fore.RED + f"Incorrect. The answer is: {result.card.back}")
         print()
 
     if args.stats:

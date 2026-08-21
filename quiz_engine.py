@@ -1,6 +1,6 @@
 """Quiz engine: factory, session orchestration, and statistics display."""
 
-from typing import Callable, Dict, List
+from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 from exceptions import InvalidModeError
 from models import Flashcard, SessionStats
@@ -8,6 +8,8 @@ from quiz_modes.base import QuizMode
 from quiz_modes.sequential import SequentialMode
 from quiz_modes.random import RandomMode
 from quiz_modes.adaptive import AdaptiveMode
+
+_EXIT_SIGNAL = "exit"
 
 _ModeFactory = Callable[[List[Flashcard]], QuizMode]
 
@@ -38,6 +40,83 @@ def get_quiz_mode(mode: str, cards: List[Flashcard]) -> QuizMode:
             f"Unknown quiz mode '{mode}'. Supported modes: {supported}."
         )
     return _MODE_MAP[key](cards)
+
+
+class AnswerResult:
+    """Immutable result of a single answered card."""
+
+    __slots__ = ("card", "given", "correct")
+
+    def __init__(self, card: Flashcard, given: str, correct: bool) -> None:
+        """Initialise an AnswerResult.
+
+        Args:
+            card: The flashcard that was presented.
+            given: The raw answer supplied by the user.
+            correct: Whether the answer matched the expected back text.
+        """
+        self.card = card
+        self.given = given
+        self.correct = correct
+
+
+def _answers_match(given: str, expected: str) -> bool:
+    """Return True if *given* matches *expected* case-insensitively after stripping.
+
+    Args:
+        given: The user's raw answer string.
+        expected: The card's back text.
+
+    Returns:
+        True when the normalised strings are equal.
+    """
+    return given.strip().lower() == expected.strip().lower()
+
+
+def run_session(
+    mode: QuizMode,
+    input_fn: Callable[[Flashcard], Optional[str]],
+) -> Iterator[Tuple[AnswerResult, SessionStats]]:
+    """Drive the quiz session and yield results one card at a time.
+
+    The function is decoupled from argparse, colorama, and ``input()``.
+    The caller supplies *input_fn*, which receives the current card and
+    returns the user's answer string, or ``None`` / the sentinel ``"exit"``
+    to stop the session early.
+
+    Args:
+        mode: An initialised QuizMode strategy (sequential, random, adaptive).
+        input_fn: Callable that accepts a Flashcard and returns the user's
+            answer string, or None to signal session termination.
+
+    Yields:
+        A ``(AnswerResult, SessionStats)`` tuple after every answered card.
+        The yielded ``SessionStats`` reflects cumulative totals up to that
+        point, allowing the caller to render feedback after each card.
+    """
+    stats = SessionStats()
+
+    while mode.has_remaining():
+        card = mode.next_card()
+        if card is None:
+            break
+
+        raw = input_fn(card)
+
+        if raw is None or raw.strip().lower() == _EXIT_SIGNAL:
+            break
+
+        correct = _answers_match(raw, card.back)
+        stats.total += 1
+
+        if correct:
+            stats.correct += 1
+        else:
+            if card.front not in stats.missed:
+                stats.missed.append(card.front)
+
+        mode.mark_answer(card, correct=correct)
+        yield AnswerResult(card=card, given=raw, correct=correct), stats
 
 
 def display_stats(stats: SessionStats) -> None:

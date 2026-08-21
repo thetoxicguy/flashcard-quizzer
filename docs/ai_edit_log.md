@@ -65,3 +65,19 @@ Records of prompts, corrections, improvements, and defects fixed during AI-assis
 **Date:** 2026-08-21
 **Prompt summary:** Type the factory `_MODE_MAP` dict correctly for mypy strict mode.
 **Defect fixed:** Annotating `_MODE_MAP` as `Dict[str, Type[QuizMode]]` caused mypy to report "Cannot instantiate abstract class" at the call site `_MODE_MAP[key](cards)` because mypy treats `Type[QuizMode]` as the abstract class itself. Fixed by introducing a `_ModeFactory = Callable[[List[Flashcard]], QuizMode]` type alias and annotating the map as `Dict[str, _ModeFactory]`. This satisfies mypy strict mode while preserving the Factory pattern semantics.
+
+---
+
+## Entry 9 — run_session Design: Iterator over In-Place Mutation (Prompt 05)
+
+**Date:** 2026-08-21
+**Prompt summary:** Implement quiz session engine decoupled from argparse and terminal rendering.
+**Logic corrected:** Initial sketch mutated a `SessionStats` object inside a `while` loop driven by `main.py`. This mixed business logic with UI concerns and made unit testing require patching `input()`. Redesigned `run_session` as a generator that accepts an injectable `input_fn: Callable[[Flashcard], Optional[str]]` and yields `(AnswerResult, SessionStats)` tuples. The caller (`main.py`) handles all rendering; the engine has no dependency on `colorama` or `argparse`. Tests use a scripted `input_fn_from(answers)` helper with no monkey-patching.
+
+---
+
+## Entry 10 — mypy List Invariance in Test Helper (Prompt 05)
+
+**Date:** 2026-08-21
+**Prompt summary:** Write `tests/test_quiz_engine.py` with full type annotations.
+**Defect fixed:** `input_fn_from` was typed as accepting `List[Optional[str]]`, but call sites passed `List[str]` (no `None`). mypy correctly rejected this because `list` is invariant. Fixed by changing the parameter type to `Sequence[Optional[str]]`, which is covariant and accepts both `List[str]` and `List[Optional[str]]` at call sites.
