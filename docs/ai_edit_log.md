@@ -222,3 +222,19 @@ Note: quality-gate commands are invoked as `python -m <tool>` rather than bare `
 - The `if __name__ == "__main__"` guard (`main.py:125`) is not coverable by pytest without invoking the module as a script under coverage instrumentation. This is a universal CPython limitation.
 - The `display_stats` else-branch (`quiz_engine.py:96`, "Missed terms: none") is reachable but requires a separate test path with zero missed terms; the line is covered — the 2 missed lines are the two items above.
 - The quality-gate tools (`black`, `mypy`, `flake8`) are not on the system `$PATH` and must be invoked as `python -m black` etc. This is an environment configuration issue, not a project defect.
+
+---
+
+## Entry 22 — Architecture Documentation (Prompt 10.5)
+
+**Date:** 2026-08-21
+**Prompt summary:** Create professional architecture documentation in `docs/architecture.md` based on the actual implemented codebase.
+**Improvement made:** No architecture documentation existed beyond the brief Architecture section in `README.md`. Created `docs/architecture.md` with 10 sections and 6 Mermaid diagrams, all generated from the actual implementation (no assumptions made):
+- **High-Level Architecture** flowchart: user → CLI → loader → factory → strategies → engine → output
+- **Class Diagram**: `QuizMode` ABC, all three concrete strategies, `Flashcard`, `SessionStats`, `AnswerResult` with relationships
+- **Factory selection logic** flowchart: `_MODE_MAP` lookup, success and `InvalidModeError` paths
+- **JSON Loading Activity** flowchart: both root formats, all 6 error paths, `Flashcard` construction
+- **Session Data Flow** flowchart: `List[Flashcard]` → mode → engine ↔ `input_fn` → yield → CLI
+- **Quiz Session Sequence Diagram**: full execution from CLI args through question/answer loop to stats output
+- Architecture Decision Records for all 5 design decisions (Strategy, Factory, modular design, type hints, testing)
+- Testing architecture section with component diagram, per-module coverage table, and key testing strategies documented
