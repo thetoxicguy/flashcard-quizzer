@@ -153,3 +153,20 @@ Records of prompts, corrections, improvements, and defects fixed during AI-assis
 **Date:** 2026-08-21
 **Prompt summary:** Apply engineering review finding: README omitted setup.cfg from architecture listing and showed stale coverage information.
 **Documentation corrected:** Added `setup.cfg` to the Architecture section of `README.md` with a description of its role (pytest and coverage configuration). Updated the coverage note from the original placeholder to the measured value: **99%** (237 statements, 2 missed — `__main__` guard and one display branch).
+
+---
+
+## Entry 20 — Full README Rewrite (Prompt 10)
+
+**Date:** 2026-08-21
+**Prompt summary:** Rewrite README.md as an accurate, comprehensive technical reference based on the actual implemented and tested project.
+**Improvement made:** The original README was a brief scaffold produced during project skeleton creation. It lacked environment configuration guidance, a detailed folder structure, per-mode behaviour descriptions, graceful exit documentation, an explicit quality-gate section with verified commands, a test-file breakdown table, and a coverage configuration snippet. Rewrote the entire file with 17 required sections. All documented commands were run and verified before writing:
+- `python main.py --help` ✅ exact output reproduced in CLI Flags section
+- `python main.py --mode sequential --file data/glossary.json` ✅ command confirmed valid
+- `python main.py -m adaptive -f data/python_basics.json` ✅ command confirmed valid
+- `python -m pytest tests/` ✅ 89 passed
+- `python -m pytest --cov=. --cov-report=html` ✅ 99% coverage, HTML report generated
+- `python -m black --check .` ✅ 17 files unchanged
+- `python -m mypy .` ✅ no issues in 17 source files
+- `python -m flake8 .` ✅ exit code 0
+Note: quality-gate commands are invoked as `python -m <tool>` rather than bare `black`/`mypy`/`flake8` because the tools are not on the system PATH in this environment; both forms work once the virtualenv is activated.
