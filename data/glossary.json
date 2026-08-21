@@ -1,0 +1,7 @@
+[
+  {"front": "Algorithm", "back": "A step-by-step procedure for solving a problem"},
+  {"front": "Data Structure", "back": "A way of organising and storing data for efficient access"},
+  {"front": "Recursion", "back": "A function that calls itself to solve a smaller subproblem"},
+  {"front": "Abstraction", "back": "Hiding complex implementation details behind a simple interface"},
+  {"front": "Encapsulation", "back": "Bundling data and methods that operate on that data into a single unit"}
+]

@@ -1,0 +1,9 @@
+{
+  "cards": [
+    {"front": "list", "back": "An ordered, mutable sequence type in Python"},
+    {"front": "tuple", "back": "An ordered, immutable sequence type in Python"},
+    {"front": "dict", "back": "A mutable mapping of key-value pairs in Python"},
+    {"front": "set", "back": "An unordered collection of unique elements in Python"},
+    {"front": "generator", "back": "A lazy iterator created with yield that produces values on demand"}
+  ]
+}
