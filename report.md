@@ -4,27 +4,42 @@
 
 The development history of Flashcard Quizzer offers a useful case study in AI-assisted software engineering. The project is small, but the collaboration was not treated as a sequence of casual code-generation requests. The prompts established requirements, architecture, risks, tests, quality gates, and documentation obligations. The edit log then recorded where the generated implementation was incomplete, misleading, or difficult to test, and how those issues were corrected. Together, `prompts.md` and `docs/ai_edit_log.md` show that productive collaboration with an AI tool depends less on asking for code quickly and more on creating a disciplined feedback loop around the code.
 
-The central lesson is that an AI assistant is most valuable as an active engineering partner when its output is constrained by explicit intent and challenged by executable evidence. It can propose structure, identify likely defects, and accelerate implementation, but human judgment remains essential for deciding whether behavior is actually correct, maintainable, and useful to a person running the application.
+The central lesson is that an AI assistant is most valuable as an engineering partner when its output is constrained by explicit intent and challenged by evidence. It can propose structure, identify defects, and accelerate implementation, but human judgment remains essential for deciding whether behavior is correct, maintainable, and useful.
+
+## How I Used AI Throughout the Process
+
+I began by creating an initial prompt to produce a sequence of prompts for the entire project. This gave the process structure before implementation and helped ensure that requirements, architecture, testing, review, and documentation were covered rather than handled as isolated requests.
+
+I reviewed the proposed sequence and polished parts of it by clarifying ambiguous requirements, adjusting the scope and order of prompts, and aligning the instructions with the project's goals. The sequence became a curated development plan rather than something accepted without question.
+
+For each prompt in the sequence, I followed the same iterative pattern with the Claude assistant:
+
+1. I sent the prompt to Claude to implement or improve the requested part of the project.
+2. I reviewed the resulting changes, including their style, design, code quality, and tests, adding a more focused code review when the change warranted it.
+3. I tested the changes in the created project structure using the relevant automated checks and test cases.
+4. I verified that the application's functionality worked as intended, including behavior that a user would observe when running the application.
+
+This kept AI assistance inside a human-directed feedback loop. Claude accelerated implementation and offered useful solutions, but I treated its output as a draft requiring review and evidence. The combination of prompt design, manual refinement, code review, testing, and functional verification made the process more reliable and revealed issues that code generation alone could miss.
 
 ## Prompts as Engineering Specifications
 
-The prompt sequence was effective because it moved from definition to implementation in deliberate phases. Prompt 01 established the project architecture, functional requirements, design patterns, quality tools, risks, and Definition of Done before implementation began. Later prompts narrowed the focus: data validation, strategy and factory patterns, the quiz engine, the CLI, comprehensive tests, review, refactoring, and documentation. This sequencing reduced ambiguity and gave the AI a stable frame of reference.
+The prompt sequence was effective because it moved from definition to implementation in deliberate phases. Prompt 01 established the architecture, requirements, design patterns, quality tools, risks, and Definition of Done. Later prompts focused on data validation, strategy and factory patterns, the quiz engine, CLI, tests, review, refactoring, and documentation. This sequencing reduced ambiguity and gave the AI a stable frame of reference.
 
-The prompts also specified observable outcomes rather than relying only on vague qualities such as "clean code." For example, the data-layer prompt required support for two JSON shapes and explicitly listed malformed JSON, missing files, missing fields, empty strings, and non-string values as cases to handle. The CLI prompt specified `exit`, `Ctrl+C`, colored feedback, friendly errors, and an always-visible summary. These details made it possible to evaluate the implementation against behavior that a user could observe.
+The prompts specified observable outcomes rather than vague qualities such as "clean code." The data-layer prompt required two JSON shapes and listed malformed JSON, missing files, missing fields, empty strings, and non-string values. The CLI prompt specified `exit`, `Ctrl+C`, colored feedback, friendly errors, and an always-visible summary. These details made the implementation testable against user-observable behavior.
 
-Another strength was the repeated requirement to inspect the work, update the edit log, and run verification commands. That turned each prompt into a small engineering contract. The prompts did not merely ask the AI to produce files; they asked it to demonstrate that the files worked. This is an important collaboration pattern: requirements, implementation, self-review, and evidence should travel together.
+The repeated requirement to inspect the work, update the edit log, and run verification commands turned each prompt into a small engineering contract. Requirements, implementation, self-review, and evidence therefore traveled together.
 
 ## What Review and Testing Revealed
 
 The edit log makes clear that first-pass generation was useful but not sufficient. Several defects were found only when the implementation was tested closely or reviewed as a system.
 
-The file handler initially checked whether `front` and `back` keys existed, but accepted values such as `42` and `null`. The correction added type and non-empty-string validation, followed by tests for those exact cases. This illustrates why requirements must describe valid values, not just required names. It also demonstrates a productive division of labor: the AI can generate a plausible validation path, while tests expose the difference between structural validity and semantic validity.
+The file handler initially checked whether `front` and `back` keys existed but accepted values such as `42` and `null`. Type and non-empty-string validation, followed by tests for those cases, corrected it. Requirements must describe valid values, not just required names. The AI can generate a plausible validation path, while tests expose the difference between structural and semantic validity.
 
-The random quiz mode produced another important lesson. Calling the global random generator made order-dependent tests nondeterministic. Introducing an optional seed and a local `random.Random` instance preserved production randomness while enabling deterministic verification. This is a broader principle for AI collaboration: when a generated design is hard to test, ask how dependencies can be injected or controlled. Testability is not a secondary convenience; it often reveals whether responsibilities have been separated properly.
+The random quiz mode showed why testability matters. Calling the global random generator made order-dependent tests nondeterministic. An optional seed and local `random.Random` instance preserved production randomness while enabling deterministic verification. When an AI-generated design is hard to test, dependencies should be made controllable; this often reveals whether responsibilities are properly separated.
 
-The quiz engine was improved in a similar way. An initial design mixed session state mutation, looping, input, and presentation concerns. Redesigning `run_session` as a generator with an injectable `input_fn` separated business logic from `argparse`, terminal rendering, and `colorama`. Tests could then provide scripted answers without monkey-patching real input. This made the code easier to reason about and made the user interface a replaceable boundary rather than an assumption embedded in the engine.
+The quiz engine initially mixed state mutation, looping, input, and presentation. Redesigning `run_session` as a generator with injectable `input_fn` separated business logic from `argparse`, terminal rendering, and `colorama`. Tests could provide scripted answers without monkey-patching real input, making the interface a replaceable boundary.
 
-The later engineering review found subtler issues that ordinary happy-path tests might miss. A dead `_current` field in `AdaptiveMode` created misleading state. Two mode lists duplicated the same source of truth and could drift apart. `AnswerResult` claimed to be immutable but used `__slots__`, which does not prevent reassignment. The generator yielded the same mutable `SessionStats` object repeatedly, so stored results could all appear to have the final state. Each correction improved not just correctness but the accuracy of the design's story. Good software should not merely work; its names, types, and documentation should tell the truth.
+The engineering review found subtler issues that happy-path tests might miss. A dead `_current` field in `AdaptiveMode` created misleading state. Two mode lists duplicated a source of truth and could drift apart. `AnswerResult` claimed to be immutable but used `__slots__`, which does not prevent reassignment. The generator yielded the same mutable `SessionStats` object repeatedly, so stored results could appear to have the final state. These corrections improved both correctness and the accuracy of the design's story.
 
 ## The Human Role in AI-Assisted Development
 
