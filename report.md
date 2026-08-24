@@ -65,10 +65,10 @@ Finally, maintain a decision record. The edit log preserved not only what change
 
 ## Limits and Remaining Risks
 
-The focus is not to eliminate AI-generated proposals, but to make their acceptance conditional. Every meaningful claim should have an appropriate check: a test, a type check, a command, a manual smoke test, or a clearly recorded assumption. When a check is unavailable, the uncertainty should be named rather than hidden.
+The goal is not to eliminate AI-generated proposals, but to make their acceptance conditional. Every meaningful claim should have an appropriate check: a test, type check, command, manual smoke test, or recorded assumption. When a check is unavailable, the uncertainty should be named rather than hidden.
 
 ## Conclusion
 
-Flashcard Quizzer demonstrates a mature pattern for collaborating with AI tools: specify intent precisely, implement in bounded stages, inspect the result, test behavior at the edges, review the design for misleading state and duplication, document corrections, and finish with a release gate. The AI accelerated construction and helped surface alternatives, but the quality of the outcome came from the surrounding discipline.
+Flashcard Quizzer demonstrates a mature pattern for collaborating with AI tools: specify intent, implement in bounded stages, inspect the result, test edge behavior, review for misleading state and duplication, document corrections, and finish with a release gate. AI accelerated construction and surfaced alternatives, but quality came from the surrounding discipline.
 
-The deepest lesson is that collaboration works when the AI is given enough structure to be useful and enough scrutiny to remain accountable. Prompts define the direction, code turns that direction into a concrete artifact, and verification determines whether the artifact deserves trust. That loop produces better software than either uncritical automation or purely manual work, because it combines speed with deliberate engineering judgment.
+The deepest lesson is that collaboration works when AI is given enough structure to be useful and enough scrutiny to remain accountable. Prompts define direction, code turns it into an artifact, and verification determines whether that artifact deserves trust. The loop combines speed with deliberate engineering judgment.
